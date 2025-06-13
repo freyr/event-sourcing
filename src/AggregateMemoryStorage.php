@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Freyr\EventSourcing;
 
 use Freyr\Identity\Id;
+
 final class AggregateMemoryStorage implements AggregateStorage
 {
     /**

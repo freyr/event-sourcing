@@ -1,11 +1,11 @@
-# Freyr Monadic Library
+# Freyr Event Sourcing Library
 
-Freyr's Identity is a simple Id class that acts as a thin adapter layer around UUID interface.
+
 
 ## Installation
 To install this library, use Composer:
 ```
-composer require freyr/monadic
+composer require freyr/event-sourcing
 ```
 
 ## Educational Purpose

@@ -13,7 +13,7 @@ abstract class AggregateRoot
      */
     private array $events = [];
 
-    protected function __construct(protected(set) Id $id)
+    final protected function __construct(protected(set) Id $id)
     {
     }
 
@@ -25,14 +25,16 @@ abstract class AggregateRoot
     final public static function fromStream(Id $id, array $streamEvents): static
     {
         $instance = new static($id);
-        $instance->replay(self::deserializeEventStream($streamEvents));
+        $instance->replay($streamEvents);
 
         return $instance;
     }
 
+    /**
+     * @param array<AggregateChanged> $historyEvents
+     */
     protected function replay(array $historyEvents): void
     {
-        /** @var AggregateChanged $pastEvent */
         foreach ($historyEvents as $pastEvent) {
             $this->apply($pastEvent);
         }
@@ -41,22 +43,8 @@ abstract class AggregateRoot
     abstract protected function apply(AggregateChanged $event): void;
 
     /**
-     * @return AggregateChanged[]
+     * @return array<AggregateChanged>
      */
-    private static function deserializeEventStream(array $serializedEvents): array
-    {
-        $events = [];
-        foreach ($serializedEvents as $serializedEvent) {
-            $eventName = $serializedEvent['_name'];
-            $deserializer = static::eventDeserializer($eventName);
-            $events[] = $deserializer($serializedEvent);
-        }
-
-        return $events;
-    }
-
-    abstract protected static function eventDeserializer(string $eventName): callable;
-
     protected function popRecordedEvents(): array
     {
         $pendingEvents = $this->events;
