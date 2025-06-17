@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Freyr\EventSourcing\Fixers;
 
 use PhpCsFixer\AbstractFixer;
-use PhpCsFixer\FixerDefinition\CodeSample;
 use PhpCsFixer\FixerDefinition\FixerDefinition;
 use PhpCsFixer\FixerDefinition\FixerDefinitionInterface;
 use PhpCsFixer\Tokenizer\Token;
 use PhpCsFixer\Tokenizer\Tokens;
+use SplFileInfo;
 
 /**
- * Converts empty function/class bodies to have both curly braces on the same line.
+ * Fixer that ensures empty method and class bodies have opening and closing braces on the same line as class/function name.
  */
 final class EmptyBracesFixer extends AbstractFixer
 {
@@ -24,165 +24,70 @@ final class EmptyBracesFixer extends AbstractFixer
     public function getDefinition(): FixerDefinitionInterface
     {
         return new FixerDefinition(
-            'Empty function bodies and classes should have opening and closing curly braces on the same line.',
-            [
-                new CodeSample(
-                    '<?php
-class EmptyClass
-{
-}
-
-function emptyFunction()
-{
-}
-'
-                ),
-                new CodeSample(
-                    '<?php
-class EmptyClass
-{
-}
-
-function emptyFunction() {
-}
-'
-                ),
-                new CodeSample(
-                    '<?php
-class EmptyClass {}
-
-function emptyFunction() {}
-'
-                ),
-            ]
+            'Ensure empty classes and methods use `{}` on the same line as class/function name with no line breaks, one space before `{`, and no space between braces.',
+            [],
         );
     }
 
     public function isCandidate(Tokens $tokens): bool
     {
-        return $tokens->isTokenKindFound(T_FUNCTION) || $tokens->isTokenKindFound(T_CLASS);
+        return $tokens->isTokenKindFound(T_CLASS) || $tokens->isTokenKindFound(T_FUNCTION);
     }
 
+
     /**
-     * Must run before BracesFixer and after ClassAttributesSeparationFixer.
+     * Must run before BracesFixer.
      */
     public function getPriority(): int
     {
         return 40;
     }
 
-    protected function applyFix(\SplFileInfo $file, Tokens $tokens): void
+    protected function applyFix(SplFileInfo $file, Tokens $tokens): void
     {
-        // Fix empty functions
-        for ($index = $tokens->count() - 1; $index > 0; --$index) {
-            if (!$tokens[$index]->isGivenKind(T_FUNCTION)) {
+        for ($index = 0; $index < $tokens->count(); $index++) {
+            if (!$tokens[$index]->isGivenKind([T_FUNCTION, T_CLASS])) {
                 continue;
             }
 
-            $openBraceIndex = $tokens->getNextTokenOfKind($index, ['{']);
-            if (null === $openBraceIndex) {
-                continue;
+            $braceStart = (int) $tokens->getNextTokenOfKind($index, ['{']);
+            $braceEnd = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_CURLY_BRACE, $braceStart);
+
+            // Check for empty body
+            if ($this->isEmptyBody($tokens, $braceStart, $braceEnd)) {
+                $this->formatInline($tokens, $braceStart, $braceEnd);
             }
-
-            $closeBraceIndex = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_CURLY_BRACE, $openBraceIndex);
-            if (null === $closeBraceIndex) {
-                continue;
-            }
-
-            // Check if this is an empty function body (only whitespace between braces)
-            $isEmpty = true;
-            for ($i = $openBraceIndex + 1; $i < $closeBraceIndex; ++$i) {
-                if (!$tokens[$i]->isWhitespace() && !$tokens[$i]->isComment()) {
-                    $isEmpty = false;
-                    break;
-                }
-            }
-
-            if (!$isEmpty) {
-                continue;
-            }
-
-            // Fix empty function formatting
-            $this->fixEmptyBody($tokens, $openBraceIndex, $closeBraceIndex);
-        }
-
-        // Fix empty classes
-        for ($index = $tokens->count() - 1; $index > 0; --$index) {
-            if (!$tokens[$index]->isGivenKind(T_CLASS)) {
-                continue;
-            }
-
-            $openBraceIndex = $tokens->getNextTokenOfKind($index, ['{']);
-            if (null === $openBraceIndex) {
-                continue;
-            }
-
-            $closeBraceIndex = $tokens->findBlockEnd(Tokens::BLOCK_TYPE_CURLY_BRACE, $openBraceIndex);
-            if (null === $closeBraceIndex) {
-                continue;
-            }
-
-            // Check if this is an empty class (only whitespace between braces)
-            $isEmpty = true;
-            for ($i = $openBraceIndex + 1; $i < $closeBraceIndex; ++$i) {
-                if (!$tokens[$i]->isWhitespace() && !$tokens[$i]->isComment()) {
-                    $isEmpty = false;
-                    break;
-                }
-            }
-
-            if (!$isEmpty) {
-                continue;
-            }
-
-            // Fix empty class formatting
-            $this->fixEmptyBody($tokens, $openBraceIndex, $closeBraceIndex);
         }
     }
 
-    /**
-     * Fixes the formatting of empty function/class bodies.
-     */
-    private function fixEmptyBody(Tokens $tokens, int $openBraceIndex, int $closeBraceIndex): void
-    {
-        // Get the token before the opening brace
-        $prevMeaningfulIndex = $tokens->getPrevMeaningfulToken($openBraceIndex);
 
-        // Find the token before the open brace
-        $beforeOpenBraceIndex = $openBraceIndex - 1;
-        
-        // Ensure there's a single space before the opening brace if needed
-        if ($tokens[$prevMeaningfulIndex]->getContent() !== ')' &&
-            $tokens[$beforeOpenBraceIndex]->isWhitespace()) {
-            $tokens[$beforeOpenBraceIndex] = new Token([T_WHITESPACE, ' ']);
-        }
-        
-        // Detect if we have a specific pattern where { is at the end of a line and } is on a new line
-        $hasNewlineBetweenBraces = false;
-        $betweenBraces = '';
-        
-        // Collect all content between braces
-        for ($i = $openBraceIndex + 1; $i < $closeBraceIndex; ++$i) {
-            if ($tokens[$i]->isWhitespace()) {
-                $betweenBraces .= $tokens[$i]->getContent();
+
+    private function isEmptyBody(Tokens $tokens, int $braceStart, int $braceEnd): bool
+    {
+        for ($i = $braceStart + 1; $i < $braceEnd; $i++) {
+            if (!$tokens[$i]->isWhitespace() && !$tokens[$i]->isComment()) {
+                return false;
             }
         }
-        
-        // Check if there's a newline between braces
-        if (strpos($betweenBraces, "\n") !== false) {
-            $hasNewlineBetweenBraces = true;
+        return true;
+    }
+
+    private function formatInline(Tokens $tokens, int $braceStart, int $braceEnd): void
+    {
+        // Remove whitespace between declaration and opening brace
+        $prevIndex = $braceStart - 1;
+        if ($tokens[$prevIndex]->isWhitespace()) {
+            $tokens[$prevIndex] = new Token([T_WHITESPACE, ' ']); // Ensure one space
+        } else {
+            $tokens->insertAt($braceStart, new Token([T_WHITESPACE, ' ']));
         }
-        
-        // Remove tokens between braces
-        for ($i = $openBraceIndex + 1; $i < $closeBraceIndex; ++$i) {
+
+        $tokens[$braceStart] = new Token('{');
+        $tokens[$braceEnd] = new Token('}');
+
+        // Remove all tokens between { and } (keep empty)
+        for ($i = $braceStart + 1; $i < $braceEnd; $i++) {
             $tokens->clearAt($i);
-        }
-        
-        // Special handling for case where function name and opening brace are on the same line,
-        // but closing brace is on a new line
-        if ($hasNewlineBetweenBraces) {
-            // Place a token with empty content between braces to ensure they appear together {}
-            $tokens[$openBraceIndex + 1] = new Token([T_WHITESPACE, '']);
         }
     }
 }

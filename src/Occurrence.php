@@ -9,8 +9,7 @@ use DateTimeZone;
 
 readonly class Occurrence
 {
-    public function __construct(public CarbonImmutable $time)
-    {}
+    public function __construct(public CarbonImmutable $time) {}
 
     final public static function now(): self
     {
