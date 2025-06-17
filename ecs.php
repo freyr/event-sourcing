@@ -14,6 +14,8 @@ return static function (ECSConfig $config): void {
     $config->import(SetList::CLEAN_CODE);
     $config->import(SetList::DOCTRINE_ANNOTATIONS);
 
+    // Import our custom fixers
+    $config->import(__DIR__ . '/ecs/custom_fixers.php');
 
     $config->paths([
         __DIR__ . '/src',
