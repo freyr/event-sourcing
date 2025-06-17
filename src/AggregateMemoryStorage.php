@@ -14,7 +14,7 @@ final class AggregateMemoryStorage implements AggregateStorage
     public array $events;
 
     /**
-     * @param array<string, array<AggregateChanged>> $events
+     * @param AggregateChanged[] $events
      */
     public function store(Id $id, array $events): void
     {
@@ -29,6 +29,6 @@ final class AggregateMemoryStorage implements AggregateStorage
     public function load(Id $id): array
     {
         $serializedEvents = $this->events[(string) $id] ?? [];
-        return array_map(static fn($item) => json_decode($item, true), $serializedEvents);
+        return array_map(static fn ($item) => json_decode($item, true), $serializedEvents);
     }
 }

@@ -11,9 +11,7 @@ use Freyr\Identity\Id;
  */
 abstract readonly class AggregateRepository
 {
-    public function __construct(private AggregateStorage $storage)
-    {
-    }
+    public function __construct(private AggregateStorage $storage) {}
 
     public function persist(AggregateRoot $root): void
     {
@@ -23,6 +21,9 @@ abstract readonly class AggregateRepository
         $this->storage->store($root->id, $events);
     }
 
+    /**
+     * @return array<mixed>
+     */
     protected function loadEventsFor(Id $id): array
     {
         return $this->storage->load($id);

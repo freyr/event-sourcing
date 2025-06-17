@@ -10,10 +10,11 @@ use UnexpectedValueException;
 
 readonly class AggregateRedisStorage implements AggregateStorage
 {
-    public function __construct(private Redis $redis)
-    {
-    }
+    public function __construct(private Redis $redis) {}
 
+    /**
+     * @param AggregateChanged[] $events
+     */
     public function store(Id $id, array $events): void
     {
         $key = 'events:' . $id;
@@ -27,7 +28,9 @@ readonly class AggregateRedisStorage implements AggregateStorage
         $serializedEvents = $this->redis->lrange($key, 0, -1);
         return array_map(static function ($item) {
             if (!is_string($item)) {
-                throw new UnexpectedValueException('Expected Redis to return a string for event serialization, got: ' . gettype($item));
+                throw new UnexpectedValueException(
+                    'Expected Redis to return a string for event serialization, got: ' . gettype($item),
+                );
             }
             return json_decode($item, true);
         }, $serializedEvents);

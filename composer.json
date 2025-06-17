@@ -6,6 +6,7 @@
     "require": {
         "php": "^8.4",
         "freyr/identity": "^0.1.0",
+        "nesbot/carbon": "^3.0",
         "ext-redis": "*"
     },
     "require-dev": {
@@ -29,7 +30,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Freyr\\EventSourcing\\Tests\\": "tests/"
+            "Freyr\\EventSourcing\\Tests\\": "tests/",
+            "Freyr\\EventSourcing\\Fixers\\": "ecs/fixers/"
         }
     },
     "config": {

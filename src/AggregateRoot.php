@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Freyr\EventSourcing;
 
-use Freyr\Identity\Id;
-
 abstract class AggregateRoot
 {
     /**
@@ -13,30 +11,27 @@ abstract class AggregateRoot
      */
     private array $events = [];
 
-    final protected function __construct(protected(set) Id $id)
-    {
-    }
+    final protected function __construct(public readonly AggregateId $id) {}
 
     /**
-     * @param Id $id
-     * @param array<AggregateChanged> $streamEvents
-     * @return static
+     * @param AggregateChanged[] $events
      */
-    final public static function fromStream(Id $id, array $streamEvents): static
+    final public static function fromEvents(AggregateId $id, array $events): static
     {
+        /** @phpstan-ignore-next-line new.staticInAbstractClassStaticMethod */
         $instance = new static($id);
-        $instance->replay($streamEvents);
+        $instance->replay($events);
 
         return $instance;
     }
 
     /**
-     * @param array<AggregateChanged> $historyEvents
+     * @param array<AggregateChanged> $events
      */
-    protected function replay(array $historyEvents): void
+    protected function replay(array $events): void
     {
-        foreach ($historyEvents as $pastEvent) {
-            $this->apply($pastEvent);
+        foreach ($events as $event) {
+            $this->apply($event);
         }
     }
 
@@ -48,9 +43,7 @@ abstract class AggregateRoot
     protected function popRecordedEvents(): array
     {
         $pendingEvents = $this->events;
-
         $this->events = [];
-
         return $pendingEvents;
     }
 

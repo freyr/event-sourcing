@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace Freyr\EventSourcing;
 
-use DateInvalidTimeZoneException;
-use DateMalformedStringException;
-use DateTimeImmutable;
-use DateTimeZone;
 use Freyr\Identity\Id;
 use JsonSerializable;
 use LogicException;
@@ -16,8 +12,7 @@ abstract class AggregateChanged implements JsonSerializable
 {
     /**
      * @param AggregateId $aggregateId
-     * @param array<string, mixed> $payload
-     * @throws DateMalformedStringException
+     * @phpstan-ignore-next-line missingType.iterableValue
      */
     final public static function occur(AggregateId $aggregateId, array $payload): static
     {
@@ -29,30 +24,26 @@ abstract class AggregateChanged implements JsonSerializable
         return new static(
             Id::new(),
             $aggregateId,
-            new DateTimeImmutable('now', new DateTimeZone('UTC')),
+            Occurrence::now(),
             $payload
         );
     }
 
+    /** @phpstan-ignore-next-line missingType.iterableValue */
     final protected function __construct(
         readonly public Id $eventId,
         readonly AggregateId $aggregateId,
-        readonly public DateTimeImmutable $occurredOn,
-        /** @var array<string, mixed> */
-        readonly protected array $payload
-    ) {
-    }
+        readonly public Occurrence $occurredOn,
+        readonly protected array $payload,
+    ) { }
 
     /**
      * @param array{
      *     _id: string,
      *     _aggregate_id: string,
-     *     _occurred_on: array{date: string, timezone: string},
+     *     _occurred_on: string,
      *     ...
      * } $payload
-     * @throws DateInvalidTimeZoneException
-     * @throws DateMalformedStringException
-     * @return static
      */
     final public static function fromArray(array $payload): static
     {
@@ -69,22 +60,17 @@ abstract class AggregateChanged implements JsonSerializable
             ])
         );
 
-        $occurredOn = new DateTimeImmutable(
-            $payload['_occurred_on']['date'],
-            new DateTimeZone($payload['_occurred_on']['timezone'])
-        );
-
         /** @phpstan-ignore-next-line new.staticInAbstractClassStaticMethod */
         return new static(
             Id::fromString($payload['_id']),
             AggregateId::fromString($payload['_aggregate_id']),
-            $occurredOn,
+            Occurrence::fromString($payload['_occurred_on']),
             static::deserializePayload($sanitizePayload),
         );
     }
 
     /**
-     * @return array<string, array<string, mixed>|mixed> $payload
+     * @return array<string, mixed>
      */
     public function jsonSerialize(): array
     {
@@ -99,13 +85,13 @@ abstract class AggregateChanged implements JsonSerializable
     }
 
     /**
-     * @param array<string, array<string, mixed>|mixed> $payload
-     * @return array<string, mixed> $payload
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
      */
     abstract protected static function deserializePayload(array $payload): array;
 
     /**
-     * @return array<string, array<string, string>|string> $payload
+     * @return array<string, mixed>
      */
     abstract protected function serializePayload(): array;
 }
