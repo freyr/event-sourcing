@@ -7,6 +7,7 @@ namespace Freyr\EventSourcing;
 use Freyr\Identity\Id;
 use JsonSerializable;
 use LogicException;
+use ReflectionClass;
 
 abstract class AggregateChanged implements JsonSerializable
 {
@@ -25,6 +26,7 @@ abstract class AggregateChanged implements JsonSerializable
             Id::new(),
             $aggregateId,
             Occurrence::now(),
+            self::getEventName(),
             $payload
         );
     }
@@ -34,6 +36,7 @@ abstract class AggregateChanged implements JsonSerializable
         readonly public Id $eventId,
         readonly AggregateId $aggregateId,
         readonly public Occurrence $occurredOn,
+        readonly public string $eventName,
         readonly protected array $payload,
     ) { }
 
@@ -42,6 +45,7 @@ abstract class AggregateChanged implements JsonSerializable
      *     _id: string,
      *     _aggregate_id: string,
      *     _occurred_on: string,
+     *     _name: string
      *     ...
      * } $payload
      */
@@ -57,6 +61,7 @@ abstract class AggregateChanged implements JsonSerializable
                 '_id',
                 '_aggregate_id',
                 '_occurred_on',
+                '_name'
             ])
         );
 
@@ -65,8 +70,23 @@ abstract class AggregateChanged implements JsonSerializable
             Id::fromString($payload['_id']),
             AggregateId::fromString($payload['_aggregate_id']),
             Occurrence::fromString($payload['_occurred_on']),
+            $payload['_name'],
             static::deserializePayload($sanitizePayload),
         );
+    }
+
+    private static function getEventName(): string
+    {
+        $reflectionClass = new ReflectionClass(static::class);
+        $attribute = $reflectionClass->getAttributes(EventName::class)[0] ?? null;
+
+        if ($attribute === null) {
+            throw new LogicException(sprintf('Class "%s" does not have an EventName attribute', static::class));
+        }
+
+        /** @var EventName $eventNameAttribute */
+        $eventNameAttribute = $attribute->newInstance();
+        return $eventNameAttribute->name;
     }
 
     /**
@@ -79,6 +99,7 @@ abstract class AggregateChanged implements JsonSerializable
                 '_id' => (string)$this->eventId,
                 '_aggregate_id' => (string)$this->aggregateId,
                 '_occurred_on' => $this->occurredOn,
+                '_name' => $this->eventName,
             ],
             $this->serializePayload()
         );

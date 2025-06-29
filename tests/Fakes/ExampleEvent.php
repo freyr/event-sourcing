@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Freyr\EventSourcing\Tests\Fakes;
 
 use Freyr\EventSourcing\AggregateChanged;
+use Freyr\EventSourcing\EventName;
 
 /**
  * @phpstan-type ExamplePayloadSerialized array{
@@ -21,6 +22,7 @@ use Freyr\EventSourcing\AggregateChanged;
  *
  * @property-read ExamplePayload $payload
  */
+#[EventName(name: 'example.event')]
 class ExampleEvent extends AggregateChanged
 {
     public string $fakeField {
@@ -57,7 +59,7 @@ class ExampleEvent extends AggregateChanged
     {
         /** @var Unit $unit */
         $unit = $this->payload['unit'];
-        
+
         return [
             'fakeField' => $this->payload['fakeField'],
             'unit' => $unit->value,

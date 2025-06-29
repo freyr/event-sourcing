@@ -4,18 +4,20 @@ declare(strict_types=1);
 
 namespace Freyr\EventSourcing;
 
-use Freyr\Identity\Id;
 
 /**
  * @method popRecordedEvents()
  */
 abstract readonly class AggregateRepository
 {
-    public function __construct(private AggregateStorage $storage) {}
+    public function __construct(
+        private AggregateStorage $storage,
+        private EventRegistry $eventRegistry,
+    ) {}
 
     public function persist(AggregateRoot $root): void
     {
-        $eventExtractor = fn () => $this->popRecordedEvents();
+        $eventExtractor = fn() => $this->popRecordedEvents();
         /** @var AggregateChanged[] $events */
         $events = $eventExtractor->call($root);
         $this->storage->store($root->id, $events);
@@ -24,8 +26,14 @@ abstract readonly class AggregateRepository
     /**
      * @return array<mixed>
      */
-    protected function loadEventsFor(Id $id): array
+    protected function loadEventsFor(AggregateId $id): array
     {
-        return $this->storage->load($id);
+        $serializedEvents = $this->storage->load($id);
+        $events = [];
+        foreach ($serializedEvents as $serializedEvent) {
+            $events[] = ($this->eventRegistry->getBy($serializedEvent['_name']))::fromArray($serializedEvent);
+        }
+
+        return $events;
     }
 }
