@@ -6,6 +6,9 @@ namespace Freyr\EventSourcing;
 
 use Freyr\Identity\Id;
 
+/**
+ * @phpstan-type AnyEvent AggregateChanged<array<string, mixed>, array<string, mixed>>
+ */
 final class AggregateMemoryStorage implements AggregateStorage
 {
     /**
@@ -14,7 +17,7 @@ final class AggregateMemoryStorage implements AggregateStorage
     public array $events;
 
     /**
-     * @param AggregateChanged[] $events
+     * @param List<AnyEvent> $events
      */
     public function store(Id $id, array $events): void
     {

@@ -8,12 +8,15 @@ use Freyr\Identity\Id;
 use Redis;
 use UnexpectedValueException;
 
+/**
+ * @phpstan-type AnyEvent AggregateChanged<array<string, mixed>, array<string, mixed>>
+ */
 readonly class AggregateRedisStorage implements AggregateStorage
 {
     public function __construct(private Redis $redis) {}
 
     /**
-     * @param AggregateChanged[] $events
+     * @param List<AnyEvent> $events
      */
     public function store(Id $id, array $events): void
     {

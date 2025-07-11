@@ -19,7 +19,9 @@ abstract class AggregateRoot
     final protected function __construct(public readonly AggregateId $id) {}
 
     /**
-     * @param list<AnyEvent> $events
+     * @template TPD of array
+     * @template TPS of array
+     * @param List<AggregateChanged<TPD, TPS>> $events
      */
     final public static function fromEvents(AggregateId $id, array $events): static
     {
@@ -31,7 +33,9 @@ abstract class AggregateRoot
     }
 
     /**
-     * @param list<AnyEvent> $events
+     * @template TPD of array
+     * @template TPS of array
+     * @param List<AggregateChanged<TPD, TPS>> $events
      */
     protected function replay(array $events): void
     {
@@ -41,25 +45,31 @@ abstract class AggregateRoot
     }
 
     /**
-     * @param AnyEvent $event
+     * @template TPD of array
+     * @template TPS of array
+     * @param AggregateChanged<TPD, TPS> $event
      */
     abstract protected function apply(AggregateChanged $event): void;
 
     /**
-     * @return list<AnyEvent>
+     * @return List<AnyEvent>
      */
     protected function popRecordedEvents(): array
     {
+        /** @var List<AnyEvent> $pendingEvents */
         $pendingEvents = $this->events;
         $this->events = [];
         return $pendingEvents;
     }
 
     /**
-     * @param AnyEvent $event
+     * @template TPD of array
+     * @template TPS of array
+     * @param AggregateChanged<TPD, TPS> $event
      */
     protected function recordThat(AggregateChanged $event): void
     {
+        /** @phpstan-ignore-next-line assign.propertyType */
         $this->events[] = $event;
         $this->apply($event);
     }

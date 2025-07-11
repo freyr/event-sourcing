@@ -39,7 +39,6 @@ class Payment extends AggregateRoot
         ]));
     }
 
-    /** @phpstan-ignore-next-line missingType.generics */
     protected function apply(AggregateChanged $event): void
     {
         match (true) {

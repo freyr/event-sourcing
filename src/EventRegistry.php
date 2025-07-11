@@ -4,15 +4,18 @@ declare(strict_types=1);
 
 namespace Freyr\EventSourcing;
 
+/**
+ * @phpstan-type AnyEvent AggregateChanged<array<string, mixed>, array<string, mixed>>
+ */
 final class EventRegistry
 {
     /**
-     * @var array<string, class-string<AggregateChanged>>
+     * @var array<string, class-string<AnyEvent>>
      */
     private array $events = [];
 
     /**
-     * @param array<string, class-string<AggregateChanged>> $evenClasses
+     * @param array<string, class-string<AnyEvent>> $evenClasses
      */
     public function __construct(array $evenClasses)
     {
@@ -22,7 +25,7 @@ final class EventRegistry
     }
 
     /**
-     * @return class-string<AggregateChanged>
+     * @return class-string<AnyEvent>
      */
     public function getBy(string $eventName): string
     {

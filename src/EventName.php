@@ -19,8 +19,8 @@ final class EventName
     public function __construct(
         public readonly string $name
     ) {
-        if (empty($name)) {
-            throw new \InvalidArgumentException('Event name cannot be empty');
+        if (strlen($name) === 0) {
+            throw new \InvalidArgumentException('Event name cannot be zero length');
         }
     }
 }

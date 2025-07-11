@@ -6,10 +6,13 @@ namespace Freyr\EventSourcing;
 
 use Freyr\Identity\Id;
 
+/**
+ * @phpstan-type AnyEvent AggregateChanged<array<string, mixed>, array<string, mixed>>
+ */
 interface AggregateStorage
 {
     /**
-     * @param AggregateChanged[] $events
+     * @param list<AnyEvent> $events
      */
     public function store(Id $id, array $events): void;
 
