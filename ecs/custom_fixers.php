@@ -14,7 +14,7 @@ require_once __DIR__ . '/fixers/EmptyBracesFixer.php';
  */
 return static function (ECSConfig $ecsConfig): void {
     // Register our custom fixer
-    $ecsConfig->rule(EmptyBracesFixer::class);
+    //$ecsConfig->rule(EmptyBracesFixer::class);
     
     // Skip the default BracesPositionFixer to avoid conflicts
     $ecsConfig->skip([

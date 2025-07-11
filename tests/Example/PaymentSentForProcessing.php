@@ -23,7 +23,7 @@ use Freyr\EventSourcing\AggregateChanged;
  *
  * @extends AggregateChanged<PayloadDeserialized, PayloadSerialized>
  */
-class PaymentCreated extends AggregateChanged
+class PaymentSentForProcessing extends AggregateChanged
 {
     public int $amount { get => $this->payload['amount']; }
     public Currency $currency { get => $this->payload['currency']; }

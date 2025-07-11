@@ -10,13 +10,26 @@ use LogicException;
 use ReflectionClass;
 
 /**
+ * @phpstan-type EventBaseSerialized array{
+ *     _id: string,
+ *     _aggregate_id: string,
+ *     _occurred_on: string,
+ *     _name: string
+ * }
+ *
+ * @template TPayloadDeserialized of array
+ * @template TPayloadSerialized   of array
+ *
  * @phpstan-consistent-constructor
  */
 abstract class AggregateChanged implements JsonSerializable
 {
+    /** @var TPayloadDeserialized&array */
+    protected array $payload;
+
     /**
-     * @param AggregateId $aggregateId
-     * @phpstan-ignore-next-line missingType.iterableValue
+     * @param AggregateId        $aggregateId
+     * @param TPayloadDeserialized&array $payload
      */
     final public static function occur(AggregateId $aggregateId, array $payload): static
     {
@@ -34,22 +47,21 @@ abstract class AggregateChanged implements JsonSerializable
         );
     }
 
-    /** @phpstan-ignore-next-line missingType.iterableValue */
+    /**
+     * @param TPayloadDeserialized&array $payload
+     */
     final protected function __construct(
         readonly public Id $eventId,
         readonly AggregateId $aggregateId,
         readonly public Occurrence $occurredOn,
         readonly public string $eventName,
-        protected array $payload,
-    ) { }
+        array $payload,
+    ) {
+        $this->payload = $payload;
+    }
 
     /**
-     * @param array{
-     *     _id: string,
-     *     _aggregate_id: string,
-     *     _occurred_on: string,
-     *     _name: string
-     * } $payload
+     * @param EventBaseSerialized & TPayloadSerialized $payload
      */
     final public static function fromArray(array $payload): static
     {
@@ -59,13 +71,10 @@ abstract class AggregateChanged implements JsonSerializable
 
         $sanitizePayload = array_diff_key(
             $payload,
-            array_flip([
-                '_id',
-                '_aggregate_id',
-                '_occurred_on',
-                '_name'
-            ])
+            array_flip(['_id', '_aggregate_id', '_occurred_on', '_name'])
         );
+
+        /** @phpstan-var TPayloadSerialized $sanitizePayload */
 
         /** @phpstan-ignore-next-line new.staticInAbstractClassStaticMethod */
         return new static(
@@ -73,7 +82,7 @@ abstract class AggregateChanged implements JsonSerializable
             AggregateId::fromString($payload['_aggregate_id']),
             Occurrence::fromString($payload['_occurred_on']),
             $payload['_name'],
-            static::deserializePayload($sanitizePayload),
+            static::deserializePayload($sanitizePayload)
         );
     }
 
@@ -92,29 +101,27 @@ abstract class AggregateChanged implements JsonSerializable
     }
 
     /**
-     * @return array<string, mixed>
+     * @return EventBaseSerialized & TPayloadSerialized
      */
     public function jsonSerialize(): array
     {
-        return array_merge(
-            [
-                '_id' => (string)$this->eventId,
-                '_aggregate_id' => (string)$this->aggregateId,
-                '_occurred_on' => $this->occurredOn,
-                '_name' => $this->eventName,
-            ],
-            $this->serializePayload()
-        );
+        /** @var EventBaseSerialized & TPayloadSerialized */
+        return array_merge([
+            '_id' => (string) $this->eventId,
+            '_aggregate_id' => (string) $this->aggregateId,
+            '_occurred_on' => $this->occurredOn,
+            '_name' => $this->eventName,
+        ], $this->serializePayload());
     }
 
     /**
-     * @param array<string, mixed> $payload
-     * @return array<string, mixed>
+     * @param TPayloadSerialized&array $payload
+     * @return TPayloadDeserialized&array
      */
     abstract protected static function deserializePayload(array $payload): array;
 
     /**
-     * @return array<string, mixed>
+     * @return TPayloadSerialized&array
      */
     abstract protected function serializePayload(): array;
 }

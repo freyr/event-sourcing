@@ -4,17 +4,22 @@ declare(strict_types=1);
 
 namespace Freyr\EventSourcing;
 
+/**
+ * Generic-agnostic event alias used inside root; we do not care about payload shapes here.
+ *
+ * @phpstan-type AnyEvent AggregateChanged<array<string, mixed>, array<string, mixed>>
+ */
 abstract class AggregateRoot
 {
     /**
-     * @var array<AggregateChanged>
+     * @var list<AnyEvent>
      */
     private array $events = [];
 
     final protected function __construct(public readonly AggregateId $id) {}
 
     /**
-     * @param AggregateChanged[] $events
+     * @param list<AnyEvent> $events
      */
     final public static function fromEvents(AggregateId $id, array $events): static
     {
@@ -26,7 +31,7 @@ abstract class AggregateRoot
     }
 
     /**
-     * @param array<AggregateChanged> $events
+     * @param list<AnyEvent> $events
      */
     protected function replay(array $events): void
     {
@@ -35,10 +40,13 @@ abstract class AggregateRoot
         }
     }
 
+    /**
+     * @param AnyEvent $event
+     */
     abstract protected function apply(AggregateChanged $event): void;
 
     /**
-     * @return array<AggregateChanged>
+     * @return list<AnyEvent>
      */
     protected function popRecordedEvents(): array
     {
@@ -47,6 +55,9 @@ abstract class AggregateRoot
         return $pendingEvents;
     }
 
+    /**
+     * @param AnyEvent $event
+     */
     protected function recordThat(AggregateChanged $event): void
     {
         $this->events[] = $event;

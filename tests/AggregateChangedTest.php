@@ -17,7 +17,9 @@ final class AggregateChangedTest extends TestCase
         $payload = [
             'fakeField' => 'test',
             'unit' => Unit::M,
-            'parameters' => ['param1' => 'value1'],
+            'parameters' => [
+                'param1' => 'value1',
+            ],
         ];
 
         $event = ExampleEvent::occur($aggregateId, $payload);
@@ -35,7 +37,9 @@ final class AggregateChangedTest extends TestCase
             '_name' => 'example.event',
             'fakeField' => 'test',
             'unit' => 'm',
-            'parameters' => ['param1' => 'value1'],
+            'parameters' => [
+                'param1' => 'value1',
+            ],
         ];
 
         $event = ExampleEvent::fromArray($payload);

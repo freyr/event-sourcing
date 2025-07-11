@@ -4,6 +4,10 @@ shell:
 test:
 	docker compose run --rm php vendor/bin/phpunit --testdox
 
-qa:
+ecs:
 	docker compose run --rm php vendor/bin/ecs check --fix
+
+phpstan:
 	docker compose run --rm php vendor/bin/phpstan --memory-limit=-1
+
+qa: ecs phpstan
