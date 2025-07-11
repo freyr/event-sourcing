@@ -9,6 +9,9 @@ use JsonSerializable;
 use LogicException;
 use ReflectionClass;
 
+/**
+ * @phpstan-consistent-constructor
+ */
 abstract class AggregateChanged implements JsonSerializable
 {
     /**
@@ -37,7 +40,7 @@ abstract class AggregateChanged implements JsonSerializable
         readonly AggregateId $aggregateId,
         readonly public Occurrence $occurredOn,
         readonly public string $eventName,
-        readonly protected array $payload,
+        protected array $payload,
     ) { }
 
     /**
@@ -46,7 +49,6 @@ abstract class AggregateChanged implements JsonSerializable
      *     _aggregate_id: string,
      *     _occurred_on: string,
      *     _name: string
-     *     ...
      * } $payload
      */
     final public static function fromArray(array $payload): static
